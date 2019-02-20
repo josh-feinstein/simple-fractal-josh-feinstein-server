@@ -70,7 +70,7 @@ app.get('/:id', async (req, res, next) => {
     res.send({ noUser: true });
   }
 
-  //Set up variables with candidate data for later use
+  //Set up variables with candidate's data for later use
   let candidateCommunicationScore = parseInt(
     currentCandidate[0].communication_score
   );
@@ -114,12 +114,6 @@ app.get('/:id', async (req, res, next) => {
   let numberOfCommunicationScoresBelowCandidate =
     candidateCommunicationScoreRank - 1;
 
-  //   let communicationPercentile = (
-  //     (numberOfCommunicationScoresBelowCandidate /
-  //       numberOfCommunicationScoreValues) *
-  //     100
-  //   ).toFixed(2);
-
   let communicationPercentile = calculatePercentile(
     numberOfCommunicationScoresBelowCandidate,
     numberOfCommunicationScoreValues
@@ -136,11 +130,6 @@ app.get('/:id', async (req, res, next) => {
   let candidateCodingScoreRank =
     relevantCodingScores.indexOf(candidateCodingScore) + 1;
   let numberOfCodingScoresBelowCandidate = candidateCodingScoreRank - 1;
-
-  //   let codingPercentile = (
-  //     (numberOfCodingScoresBelowCandidate / numberOfCodingScoreValues) *
-  //     100
-  //   ).toFixed(2);
 
   let codingPercentile = calculatePercentile(
     numberOfCodingScoresBelowCandidate,
