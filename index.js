@@ -70,8 +70,10 @@ app.get('/:id', async (req, res, next) => {
 
   //Set up variables with candidate data for later use
   let candidateID = currentCandidate[0].candidate_id;
-  let candidateCommunicationScore = currentCandidate[0].communication_score;
-  let candidateCodingScore = currentCandidate[0].coding_score;
+  let candidateCommunicationScore = parseInt(
+    currentCandidate[0].communication_score
+  );
+  let candidateCodingScore = parseInt(currentCandidate[0].coding_score);
   let candidateTitle = currentCandidate[0].title;
   let candidateCompanyID = currentCandidate[0].company_id;
   let candidateCompanyFractalIndex = companies.find(
@@ -105,18 +107,50 @@ app.get('/:id', async (req, res, next) => {
     similarCompaniesIDs.includes(employee.company_id)
   );
 
-  //CALCULATE COMMUNICATION PERCENTILE
+  //CALCULATE COMMUNICATION SCORE PERCENTILE
   let relevantCommuncationScores = similarEmployeesAtSimilarCompanies
     .map(employee => parseInt(employee.communication_score))
     .sort(function(a, b) {
       return a - b;
     });
 
-  //   let candidateScoreLocation = relevantCommuncationScores.indexOf(
-  //     candidateCommunicationScore
-  //   );
+  let numberOfCommunicationScoreValues = relevantCommuncationScores.length;
 
-  res.send(relevantCommuncationScores);
+  let candidateCommunicationScoreRank =
+    relevantCommuncationScores.indexOf(candidateCommunicationScore) + 1;
+
+  let numberOfCommunicationScoresBelowCandidate =
+    candidateCommunicationScoreRank - 1;
+
+  let communicationsPercentile = (
+    (numberOfCommunicationScoresBelowCandidate /
+      numberOfCommunicationScoreValues) *
+    100
+  ).toFixed(2);
+
+  //CALCULATE CODING SCORE PERCENTILE
+  let relevantCodingScores = similarEmployeesAtSimilarCompanies
+    .map(employee => parseInt(employee.coding_score))
+    .sort(function(a, b) {
+      return a - b;
+    });
+
+  let numberOfCodingScoreValues = relevantCodingScores.length;
+
+  let candidateCodingScoreRank =
+    relevantCodingScores.indexOf(candidateCodingScore) + 1;
+
+  let numberOfCodingScoresBelowCandidate = candidateCodingScoreRank - 1;
+
+  let codingPercentile = (
+    (numberOfCodingScoresBelowCandidate / numberOfCodingScoreValues) *
+    100
+  ).toFixed(2);
+
+  res.send({
+    communicationsPercentile,
+    codingPercentile,
+  });
 });
 
 // error handling endware
