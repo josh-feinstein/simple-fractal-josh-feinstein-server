@@ -4,6 +4,8 @@ const app = express();
 const Papa = require('papaparse');
 const axios = require('axios');
 
+const { calculatePercentile } = require('./utils/calculatePercentile');
+
 app.listen(PORT, () => console.log('Connected to port ' + PORT));
 
 app.use(function(req, res, next) {
@@ -62,7 +64,6 @@ app.get('/:id', async (req, res, next) => {
   let currentCandidate = scoreRecords.filter(
     candidate => candidate.candidate_id === id
   );
-  //   res.send(currentCandidate);
 
   //Send null to frontend if incorrect ID is entered
   if (!currentCandidate.length) {
@@ -70,43 +71,35 @@ app.get('/:id', async (req, res, next) => {
   }
 
   //Set up variables with candidate data for later use
-  let candidateID = currentCandidate[0].candidate_id;
   let candidateCommunicationScore = parseInt(
     currentCandidate[0].communication_score
   );
   let candidateCodingScore = parseInt(currentCandidate[0].coding_score);
   let candidateTitle = currentCandidate[0].title;
-  let candidateCompanyID = currentCandidate[0].company_id;
   let candidateCompanyFractalIndex = companies.find(
     company => company.company_id === currentCandidate[0].company_id
   ).fractal_index;
 
   //GET SIMILAR COMPANIES (within 0.15 variance of Fractal Index)
-  //Copy Company Data
-  let allCompaniesArray = companies.slice();
-
-  //Remove Companies outside 0.15 variance
-  let similarCompanies = allCompaniesArray.filter(
-    company =>
-      Math.abs(company.fractal_index - candidateCompanyFractalIndex) < 0.15
-  );
-
-  //Create area with ID values for later use
-  let similarCompaniesIDs = similarCompanies.map(company => company.company_id);
+  //Copy all company data
+  let similarCompaniesIDs = companies
+    .slice()
+    //Remove companies outside 0.15 variance
+    .filter(
+      company =>
+        Math.abs(company.fractal_index - candidateCompanyFractalIndex) < 0.15
+    )
+    //Create array storing ID values of similara companies for later use
+    .map(company => company.company_id);
 
   //GET SIMILAR EMPLOYEES
   //Copy Employee Data
-  let allEmployeesArray = scoreRecords.slice();
-
-  //Remove Employees with different titles
-  let similarEmployees = allEmployeesArray.filter(
-    employee => candidateTitle === employee.title
-  );
-
-  //Remove Employees at non-similar companies
-  let similarEmployeesAtSimilarCompanies = similarEmployees.filter(employee =>
-    similarCompaniesIDs.includes(employee.company_id)
-  );
+  let similarEmployeesAtSimilarCompanies = scoreRecords
+    .slice()
+    //Remove Employees with different titles
+    .filter(employee => candidateTitle === employee.title)
+    //Remove Employees at non-similar companies using similarCompaniesIDs array
+    .filter(employee => similarCompaniesIDs.includes(employee.company_id));
 
   //CALCULATE COMMUNICATION SCORE PERCENTILE
   let relevantCommuncationScores = similarEmployeesAtSimilarCompanies
@@ -116,18 +109,21 @@ app.get('/:id', async (req, res, next) => {
     });
 
   let numberOfCommunicationScoreValues = relevantCommuncationScores.length;
-
   let candidateCommunicationScoreRank =
     relevantCommuncationScores.indexOf(candidateCommunicationScore) + 1;
-
   let numberOfCommunicationScoresBelowCandidate =
     candidateCommunicationScoreRank - 1;
 
-  let communicationPercentile = (
-    (numberOfCommunicationScoresBelowCandidate /
-      numberOfCommunicationScoreValues) *
-    100
-  ).toFixed(2);
+  //   let communicationPercentile = (
+  //     (numberOfCommunicationScoresBelowCandidate /
+  //       numberOfCommunicationScoreValues) *
+  //     100
+  //   ).toFixed(2);
+
+  let communicationPercentile = calculatePercentile(
+    numberOfCommunicationScoresBelowCandidate,
+    numberOfCommunicationScoreValues
+  );
 
   //CALCULATE CODING SCORE PERCENTILE
   let relevantCodingScores = similarEmployeesAtSimilarCompanies
@@ -137,16 +133,19 @@ app.get('/:id', async (req, res, next) => {
     });
 
   let numberOfCodingScoreValues = relevantCodingScores.length;
-
   let candidateCodingScoreRank =
     relevantCodingScores.indexOf(candidateCodingScore) + 1;
-
   let numberOfCodingScoresBelowCandidate = candidateCodingScoreRank - 1;
 
-  let codingPercentile = (
-    (numberOfCodingScoresBelowCandidate / numberOfCodingScoreValues) *
-    100
-  ).toFixed(2);
+  //   let codingPercentile = (
+  //     (numberOfCodingScoresBelowCandidate / numberOfCodingScoreValues) *
+  //     100
+  //   ).toFixed(2);
+
+  let codingPercentile = calculatePercentile(
+    numberOfCodingScoresBelowCandidate,
+    numberOfCodingScoreValues
+  );
 
   res.send({
     communicationPercentile,
