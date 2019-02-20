@@ -65,7 +65,7 @@ app.get('/:id', async (req, res, next) => {
     candidate => candidate.candidate_id === id
   );
 
-  //Send null to frontend if incorrect ID is entered
+  //Send response to frontend if incorrect ID is entered
   if (!currentCandidate.length) {
     res.send({ noUser: true });
   }
