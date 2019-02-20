@@ -6,6 +6,17 @@ const axios = require('axios');
 
 app.listen(PORT, () => console.log('Connected to port ' + PORT));
 
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json'
+  );
+  next();
+});
+
 app.get('/', async (req, res, next) => {
   const id = req.params.id;
 
@@ -47,5 +58,10 @@ app.get('/', async (req, res, next) => {
     console.error(error);
   }
 
-  res.send({ scoreRecords, companies });
+  res.send([scoreRecords, companies]);
 });
+
+// error handling endware
+app.use((err, req, res, next) =>
+  res.status(err.status || 500).send(err.message || 'Internal server error.')
+);
