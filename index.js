@@ -62,10 +62,11 @@ app.get('/:id', async (req, res, next) => {
   let currentCandidate = scoreRecords.filter(
     candidate => candidate.candidate_id === id
   );
+  //   res.send(currentCandidate);
 
   //Send null to frontend if incorrect ID is entered
-  if (!currentCandidate) {
-    res.send(null);
+  if (!currentCandidate.length) {
+    res.send({ noUser: true });
   }
 
   //Set up variables with candidate data for later use
