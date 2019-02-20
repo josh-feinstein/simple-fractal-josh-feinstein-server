@@ -5,10 +5,10 @@ const Papa = require('papaparse');
 
 app.listen(PORT, () => console.log('Connected to port ' + PORT));
 
-app.get('/:id', (req, res, next) => {
+app.get('/', (req, res, next) => {
   const id = req.params.id;
 
-  const scoreRecords = Papa.parse(
+  Papa.parse(
     'https://s3.amazonaws.com/simple-fractal-recruiting/score-records.csv',
     {
       header: true,
