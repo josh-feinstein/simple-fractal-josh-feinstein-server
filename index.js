@@ -123,7 +123,7 @@ app.get('/:id', async (req, res, next) => {
   let numberOfCommunicationScoresBelowCandidate =
     candidateCommunicationScoreRank - 1;
 
-  let communicationsPercentile = (
+  let communicationPercentile = (
     (numberOfCommunicationScoresBelowCandidate /
       numberOfCommunicationScoreValues) *
     100
@@ -149,7 +149,7 @@ app.get('/:id', async (req, res, next) => {
   ).toFixed(2);
 
   res.send({
-    communicationsPercentile,
+    communicationPercentile,
     codingPercentile,
   });
 });
