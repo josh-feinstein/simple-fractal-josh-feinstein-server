@@ -17,7 +17,7 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.get('/', async (req, res, next) => {
+app.get('/:id', async (req, res, next) => {
   const id = req.params.id;
 
   let scoreRecords;
@@ -58,7 +58,65 @@ app.get('/', async (req, res, next) => {
     console.error(error);
   }
 
-  res.send([scoreRecords, companies]);
+  //Get current candidate
+  let currentCandidate = scoreRecords.filter(
+    candidate => candidate.candidate_id === id
+  );
+
+  //Send null to frontend if incorrect ID is entered
+  if (!currentCandidate) {
+    res.send(null);
+  }
+
+  //Set up variables with candidate data for later use
+  let candidateID = currentCandidate[0].candidate_id;
+  let candidateCommunicationScore = currentCandidate[0].communication_score;
+  let candidateCodingScore = currentCandidate[0].coding_score;
+  let candidateTitle = currentCandidate[0].title;
+  let candidateCompanyID = currentCandidate[0].company_id;
+  let candidateCompanyFractalIndex = companies.find(
+    company => company.company_id === currentCandidate[0].company_id
+  ).fractal_index;
+
+  //GET SIMILAR COMPANIES (within 0.15 variance of Fractal Index)
+  //Copy Company Data
+  let allCompaniesArray = companies.slice();
+
+  //Remove Companies outside 0.15 variance
+  let similarCompanies = allCompaniesArray.filter(
+    company =>
+      Math.abs(company.fractal_index - candidateCompanyFractalIndex) < 0.15
+  );
+
+  //Create area with ID values for later use
+  let similarCompaniesIDs = similarCompanies.map(company => company.company_id);
+
+  //GET SIMILAR EMPLOYEES
+  //Copy Employee Data
+  let allEmployeesArray = scoreRecords.slice();
+
+  //Remove Employees with different titles
+  let similarEmployees = allEmployeesArray.filter(
+    employee => candidateTitle === employee.title
+  );
+
+  //Remove Employees at non-similar companies
+  let similarEmployeesAtSimilarCompanies = similarEmployees.filter(employee =>
+    similarCompaniesIDs.includes(employee.company_id)
+  );
+
+  //CALCULATE COMMUNICATION PERCENTILE
+  let relevantCommuncationScores = similarEmployeesAtSimilarCompanies
+    .map(employee => parseInt(employee.communication_score))
+    .sort(function(a, b) {
+      return a - b;
+    });
+
+  //   let candidateScoreLocation = relevantCommuncationScores.indexOf(
+  //     candidateCommunicationScore
+  //   );
+
+  res.send(relevantCommuncationScores);
 });
 
 // error handling endware
